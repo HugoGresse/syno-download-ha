@@ -20,7 +20,8 @@ ha-card { padding: 10px 12px 12px; font-size: 13px; line-height: 1.35; }
 .bar { height: 4px; border-radius: 2px; background: var(--divider-color); margin-top: 3px; overflow: hidden; }
 .fill { height: 100%; background: var(--primary-color); transition: width 0.4s ease; }
 .paused .fill { background: var(--warning-color, #b58e31); }
-.done { display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--divider-color); font-size: 12px; color: var(--secondary-text-color); }
+.done { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--divider-color); font-size: 12px; color: var(--secondary-text-color); }
+.drow { display: flex; justify-content: space-between; gap: 8px; margin: 2px 0; }
 .ltitle { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .addrow { display: flex; gap: 6px; margin-top: 8px; }
 input[type="text"] { flex: 1; min-width: 0; border: 1px solid var(--divider-color); border-radius: 6px; background: transparent; color: var(--primary-text-color); padding: 5px 8px; font-size: 12px; outline: none; }
@@ -68,6 +69,7 @@ class SynoDownloadCard extends HTMLElement {
             title: config.title ?? "Downloads",
             show_add: config.show_add ?? true,
             show_completed: config.show_completed ?? true,
+            completed_count: config.completed_count ?? 3,
         };
         this.lastEntity = undefined;
         this.buildShell();
@@ -141,14 +143,17 @@ class SynoDownloadCard extends HTMLElement {
                 .map((task) => this.taskHtml(task))
                 .join("");
         }
-        const latest = this.config.show_completed
-            ? entity.attributes.latest_completed
-            : null;
-        if (latest) {
+        const attrs = entity.attributes;
+        const completed = (attrs.completed ?? (attrs.latest_completed ? [attrs.latest_completed] : [])).slice(0, this.config.completed_count);
+        if (this.config.show_completed && completed.length > 0) {
             this.completedEl.hidden = false;
-            this.completedEl.innerHTML = `
-        <span class="ltitle" title="${escapeHtml(latest.title)}">&#10003; ${escapeHtml(latest.title)}</span>
-        <span class="meta">${latest.completed_time ? formatAgo(latest.completed_time) : ""}</span>`;
+            this.completedEl.innerHTML = completed
+                .map((item) => `
+        <div class="drow">
+          <span class="ltitle" title="${escapeHtml(item.title)}">&#10003; ${escapeHtml(item.title)}</span>
+          <span class="meta">${item.completed_time ? formatAgo(item.completed_time) : ""}</span>
+        </div>`)
+                .join("");
         }
         else {
             this.completedEl.hidden = true;

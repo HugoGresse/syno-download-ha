@@ -81,6 +81,7 @@ SENSORS: tuple[SdsSensorDescription, ...] = (
             "error": data.summary.error,
             "total": data.summary.total,
             "latest_completed": data.summary.latest_completed,
+            "completed": data.summary.completed,
             "tasks": data.summary.tasks,
         },
     ),

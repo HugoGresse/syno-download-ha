@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any
@@ -86,7 +87,7 @@ class SdsCoordinator(DataUpdateCoordinator[SdsData]):
         stat_data: dict[str, Any] = stat.get("data") or {}
         tasks = [task_to_dict(task) for task in download_station.get_all_tasks()]
         return SdsData(
-            summary=summarize(tasks),
+            summary=summarize(tasks, now=time.time()),
             speed_download=stat_data.get("speed_download", 0),
             speed_upload=stat_data.get("speed_upload", 0),
         )

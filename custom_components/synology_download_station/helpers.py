@@ -24,6 +24,10 @@ SEEDING_STATE = "seeding"
 FINISHED_STATE = "finished"
 ERROR_STATE = "error"
 
+# Completed tasks older than this are dropped from the `completed` list.
+RECENT_COMPLETED_WINDOW_S = 24 * 3600
+MAX_COMPLETED = 10
+
 
 @dataclass(slots=True)
 class DownloadSummary:
@@ -37,6 +41,7 @@ class DownloadSummary:
     total: int = 0
     progress: float | None = None
     latest_completed: dict[str, Any] | None = None
+    completed: list[dict[str, Any]] = field(default_factory=list)
     tasks: list[dict[str, Any]] = field(default_factory=list)
 
 
@@ -79,11 +84,20 @@ def task_to_dict(task: Any) -> dict[str, Any]:
     }
 
 
-def summarize(tasks: list[dict[str, Any]]) -> DownloadSummary:
+def _slim(task: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "title": task["title"],
+        "size": task["size"],
+        "completed_time": task.get("completed_time", 0),
+    }
+
+
+def summarize(tasks: list[dict[str, Any]], now: float) -> DownloadSummary:
     """Aggregate task dicts into counters and an overall progress percent.
 
     Overall progress is size-weighted across in-progress and paused tasks,
-    None when nothing is queued.
+    None when nothing is queued. `now` (epoch seconds) bounds the
+    `completed` list to the last RECENT_COMPLETED_WINDOW_S.
     """
     summary = DownloadSummary(total=len(tasks))
     size_sum = 0
@@ -114,11 +128,21 @@ def summarize(tasks: list[dict[str, Any]]) -> DownloadSummary:
         ):
             latest = task
     if latest is not None:
-        summary.latest_completed = {
-            "title": latest["title"],
-            "size": latest["size"],
-            "completed_time": latest.get("completed_time", 0),
-        }
+        summary.latest_completed = _slim(latest)
+    summary.completed = [
+        _slim(task)
+        for task in sorted(
+            (
+                task
+                for task in tasks
+                if task["status"] in (FINISHED_STATE, SEEDING_STATE)
+                and 0 < task.get("completed_time", 0)
+                and now - task["completed_time"] <= RECENT_COMPLETED_WINDOW_S
+            ),
+            key=lambda task: task["completed_time"],
+            reverse=True,
+        )
+    ][:MAX_COMPLETED]
     if size_sum:
         summary.progress = round(downloaded_sum / size_sum * 100, 1)
     return summary

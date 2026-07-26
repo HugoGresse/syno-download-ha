@@ -16,6 +16,8 @@ helpers = importlib.util.module_from_spec(spec)
 sys.modules["sds_helpers"] = helpers
 spec.loader.exec_module(helpers)
 
+NOW = 1_000_000.0
+
 
 def make_task(
     status="downloading",
@@ -105,7 +107,7 @@ class TestTaskToDict:
 
 class TestSummarize:
     def test_empty(self):
-        summary = helpers.summarize([])
+        summary = helpers.summarize([], NOW)
         assert summary.total == 0
         assert summary.progress is None
         assert summary.tasks == []
@@ -120,7 +122,7 @@ class TestSummarize:
             helpers.task_to_dict(make_task(status="seeding")),
             helpers.task_to_dict(make_task(status="error")),
         ]
-        summary = helpers.summarize(tasks)
+        summary = helpers.summarize(tasks, NOW)
         assert summary.total == 5
         assert summary.downloading == 1
         assert summary.paused == 1
@@ -134,7 +136,7 @@ class TestSummarize:
 
     def test_zero_size_tasks_excluded_from_progress(self):
         tasks = [helpers.task_to_dict(make_task(size=0, downloaded=0))]
-        summary = helpers.summarize(tasks)
+        summary = helpers.summarize(tasks, NOW)
         assert summary.downloading == 1
         assert summary.progress is None
 
@@ -142,7 +144,7 @@ class TestSummarize:
 class TestLatestCompleted:
     def test_none_when_nothing_completed(self):
         tasks = [helpers.task_to_dict(make_task())]
-        assert helpers.summarize(tasks).latest_completed is None
+        assert helpers.summarize(tasks, NOW).latest_completed is None
 
     def test_picks_most_recent_finished(self):
         tasks = [
@@ -153,7 +155,7 @@ class TestLatestCompleted:
                 make_task(status="finished", title="new.iso", completed_time=200)
             ),
         ]
-        latest = helpers.summarize(tasks).latest_completed
+        latest = helpers.summarize(tasks, NOW).latest_completed
         assert latest is not None
         assert latest["title"] == "new.iso"
         assert latest["completed_time"] == 200
@@ -167,7 +169,7 @@ class TestLatestCompleted:
                 make_task(status="finished", title="done.iso", completed_time=200)
             ),
         ]
-        latest = helpers.summarize(tasks).latest_completed
+        latest = helpers.summarize(tasks, NOW).latest_completed
         assert latest is not None
         assert latest["title"] == "seeded.iso"
 
@@ -176,10 +178,59 @@ class TestLatestCompleted:
             helpers.task_to_dict(make_task(status="finished", title="first.iso")),
             helpers.task_to_dict(make_task(status="finished", title="second.iso")),
         ]
-        latest = helpers.summarize(tasks).latest_completed
+        latest = helpers.summarize(tasks, NOW).latest_completed
         assert latest is not None
         assert latest["title"] == "second.iso"
 
     def test_completed_time_flows_through_task_dict(self):
         data = helpers.task_to_dict(make_task(completed_time=1234))
         assert data["completed_time"] == 1234
+
+
+class TestCompletedList:
+    def test_recent_sorted_newest_first(self):
+        tasks = [
+            helpers.task_to_dict(
+                make_task(
+                    status="finished", title="older.iso", completed_time=NOW - 7200
+                )
+            ),
+            helpers.task_to_dict(
+                make_task(status="seeding", title="newer.iso", completed_time=NOW - 60)
+            ),
+        ]
+        completed = helpers.summarize(tasks, NOW).completed
+        assert [item["title"] for item in completed] == ["newer.iso", "older.iso"]
+
+    def test_older_than_24h_excluded(self):
+        tasks = [
+            helpers.task_to_dict(
+                make_task(
+                    status="finished", title="old.iso", completed_time=NOW - 90000
+                )
+            ),
+            helpers.task_to_dict(
+                make_task(status="finished", title="new.iso", completed_time=NOW - 100)
+            ),
+        ]
+        completed = helpers.summarize(tasks, NOW).completed
+        assert [item["title"] for item in completed] == ["new.iso"]
+
+    def test_zero_timestamp_excluded_but_latest_still_set(self):
+        tasks = [helpers.task_to_dict(make_task(status="finished", title="no-ts.iso"))]
+        summary = helpers.summarize(tasks, NOW)
+        assert summary.completed == []
+        assert summary.latest_completed is not None
+        assert summary.latest_completed["title"] == "no-ts.iso"
+
+    def test_capped_at_max(self):
+        tasks = [
+            helpers.task_to_dict(
+                make_task(
+                    status="finished", title=f"file{i}.iso", completed_time=NOW - i
+                )
+            )
+            for i in range(15)
+        ]
+        completed = helpers.summarize(tasks, NOW).completed
+        assert len(completed) == helpers.MAX_COMPLETED

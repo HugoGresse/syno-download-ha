@@ -53,7 +53,7 @@ The polling interval (default 10 s) can be changed under the integration's
 | --- | --- |
 | `sensor.synology_download_station_download_speed` | Current total download rate |
 | `sensor.synology_download_station_upload_speed` | Current total upload rate |
-| `sensor.synology_download_station_active_downloads` | Number of downloading tasks. Attributes: `paused`, `seeding`, `finished`, `error`, `total` counts and a `tasks` list |
+| `sensor.synology_download_station_active_downloads` | Number of downloading tasks. Attributes: `paused`, `seeding`, `finished`, `error`, `total` counts, a `tasks` list, `latest_completed` and a `completed` list (last 24 h, newest first, max 10) |
 | `sensor.synology_download_station_overall_progress` | Size-weighted progress % of queued tasks, unknown when idle |
 | `sensor.synology_download_station_latest_completed` | Title of the most recently completed download. Attributes: `completed_at`, `size` |
 | `text.synology_download_station_add_download` | Submit box: paste a link to start a download |
@@ -85,16 +85,17 @@ type: custom:syno-download-card
 ```
 
 It shows every active/paused download with a progress bar, speed and ETA,
-the latest completed download, and an add row: paste a magnet/URL and press
-Enter, or use the folder button to upload a `.torrent` file from the
-browser.
+the downloads completed in the last 24 h (3 by default), and an add row:
+paste a magnet/URL and press Enter, or use the folder button to upload a
+`.torrent` file from the browser.
 
 | Option | Default | Description |
 | --- | --- | --- |
 | `entity` | `sensor.synology_download_station_active_downloads` | Source sensor |
 | `title` | `Downloads` | Card title |
 | `show_add` | `true` | Show the magnet/torrent add row |
-| `show_completed` | `true` | Show the latest completed line |
+| `show_completed` | `true` | Show the completed section |
+| `completed_count` | `3` | Max completed lines (last 24 h, up to 10 provided) |
 
 ## Adding downloads
 
