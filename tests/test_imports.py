@@ -12,6 +12,7 @@ def test_all_modules_import():
         coordinator,
         entity,
         helpers,
+        resources,
         sensor,
         services,
         text,
