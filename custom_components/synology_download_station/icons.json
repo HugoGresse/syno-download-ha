@@ -12,6 +12,9 @@
       },
       "overall_progress": {
         "default": "mdi:progress-download"
+      },
+      "latest_completed": {
+        "default": "mdi:check-circle-outline"
       }
     },
     "text": {
@@ -23,6 +26,9 @@
   "services": {
     "add_task": {
       "service": "mdi:download"
+    },
+    "add_torrent": {
+      "service": "mdi:file-upload"
     }
   }
 }

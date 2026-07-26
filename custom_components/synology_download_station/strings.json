@@ -54,6 +54,9 @@
       },
       "overall_progress": {
         "name": "Overall progress"
+      },
+      "latest_completed": {
+        "name": "Latest completed"
       }
     },
     "text": {
@@ -70,6 +73,32 @@
         "url": {
           "name": "URL",
           "description": "The magnet or torrent/NZB file link to download."
+        },
+        "destination": {
+          "name": "Destination",
+          "description": "Shared folder path on the NAS, e.g. downloads. Uses the Download Station default when empty."
+        },
+        "config_entry_id": {
+          "name": "Download Station",
+          "description": "Which Download Station to use. Only needed when several are configured."
+        }
+      }
+    },
+    "add_torrent": {
+      "name": "Add torrent file",
+      "description": "Uploads a .torrent file and starts the download.",
+      "fields": {
+        "torrent": {
+          "name": "Torrent (base64)",
+          "description": "The .torrent file content, base64 encoded. Use either this or File path."
+        },
+        "file_path": {
+          "name": "File path",
+          "description": "Path to a .torrent file readable by Home Assistant, e.g. /config/torrents/x.torrent. The folder must be in allowlist_external_dirs (or be the config folder)."
+        },
+        "filename": {
+          "name": "Filename",
+          "description": "Name reported to Download Station. Defaults to the file name."
         },
         "destination": {
           "name": "Destination",
@@ -97,6 +126,15 @@
     },
     "entry_not_found": {
       "message": "The given config entry is not found or not loaded."
+    },
+    "invalid_torrent": {
+      "message": "The torrent content is not valid base64."
+    },
+    "path_not_allowed": {
+      "message": "Path {path} is not allowed. Add its folder to allowlist_external_dirs."
+    },
+    "file_read_failed": {
+      "message": "Could not read the torrent file: {error}"
     }
   }
 }

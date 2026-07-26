@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
+from homeassistant.components.frontend import add_extra_js_url
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.const import (
     CONF_HOST,
     CONF_PASSWORD,
@@ -17,13 +20,14 @@ from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.typing import ConfigType
+from homeassistant.loader import async_get_integration
 from synology_dsm import SynologyDSM
 from synology_dsm.exceptions import (
     SynologyDSMException,
     SynologyDSMLoginFailedException,
 )
 
-from .const import DOMAIN, PLATFORMS
+from .const import CARD_URL, DOMAIN, PLATFORMS
 from .coordinator import SdsConfigEntry, SdsCoordinator
 from .services import async_setup_services
 
@@ -33,8 +37,15 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Register the integration services."""
+    """Register the integration services and the bundled dashboard card."""
     async_setup_services(hass)
+
+    card_path = Path(__file__).parent / "frontend" / "card.js"
+    await hass.http.async_register_static_paths(
+        [StaticPathConfig(CARD_URL, str(card_path), cache_headers=True)]
+    )
+    integration = await async_get_integration(hass, DOMAIN)
+    add_extra_js_url(hass, f"{CARD_URL}?v={integration.version}")
     return True
 
 

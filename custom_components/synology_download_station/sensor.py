@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any
 
 from homeassistant.components.sensor import (
@@ -15,6 +16,7 @@ from homeassistant.components.sensor import (
 from homeassistant.const import PERCENTAGE, UnitOfDataRate
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+from homeassistant.helpers.typing import StateType
 
 from .coordinator import SdsConfigEntry, SdsCoordinator, SdsData
 from .entity import SdsEntity
@@ -26,8 +28,24 @@ PARALLEL_UPDATES = 0
 class SdsSensorDescription(SensorEntityDescription):
     """Sensor description with value extractors."""
 
-    value_fn: Callable[[SdsData], float | int | None]
+    value_fn: Callable[[SdsData], StateType]
     attributes_fn: Callable[[SdsData], dict[str, Any]] | None = None
+
+
+def _latest_completed_attributes(data: SdsData) -> dict[str, Any]:
+    """Expose when and how big the latest completed download was."""
+    latest = data.summary.latest_completed
+    if not latest:
+        return {}
+    completed_time = latest.get("completed_time") or 0
+    return {
+        "completed_at": (
+            datetime.fromtimestamp(completed_time, tz=UTC).isoformat()
+            if completed_time
+            else None
+        ),
+        "size": latest.get("size"),
+    }
 
 
 SENSORS: tuple[SdsSensorDescription, ...] = (
@@ -62,6 +80,7 @@ SENSORS: tuple[SdsSensorDescription, ...] = (
             "finished": data.summary.finished,
             "error": data.summary.error,
             "total": data.summary.total,
+            "latest_completed": data.summary.latest_completed,
             "tasks": data.summary.tasks,
         },
     ),
@@ -72,6 +91,12 @@ SENSORS: tuple[SdsSensorDescription, ...] = (
         suggested_display_precision=0,
         state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda data: data.summary.progress,
+    ),
+    SdsSensorDescription(
+        key="latest_completed",
+        translation_key="latest_completed",
+        value_fn=lambda data: (data.summary.latest_completed or {}).get("title"),
+        attributes_fn=_latest_completed_attributes,
     ),
 )
 
@@ -99,7 +124,7 @@ class SdsSensor(SdsEntity, SensorEntity):
         super().__init__(coordinator, description.key)
 
     @property
-    def native_value(self) -> float | int | None:
+    def native_value(self) -> StateType:
         """Return the sensor value."""
         return self.entity_description.value_fn(self.coordinator.data)
 

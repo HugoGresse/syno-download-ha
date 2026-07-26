@@ -23,9 +23,11 @@ def make_task(
     downloaded=500,
     speed_download=100,
     transfer=True,
+    title="ubuntu.iso",
+    completed_time=0,
 ):
     """Build a stand-in for SynoDownloadTask."""
-    additional = {}
+    additional = {"detail": {"completed_time": completed_time}}
     if transfer:
         additional["transfer"] = {
             "size_downloaded": downloaded,
@@ -34,7 +36,7 @@ def make_task(
         }
     return SimpleNamespace(
         id="dbid_1",
-        title="ubuntu.iso",
+        title=title,
         type="bt",
         status=status,
         size=size,
@@ -135,3 +137,49 @@ class TestSummarize:
         summary = helpers.summarize(tasks)
         assert summary.downloading == 1
         assert summary.progress is None
+
+
+class TestLatestCompleted:
+    def test_none_when_nothing_completed(self):
+        tasks = [helpers.task_to_dict(make_task())]
+        assert helpers.summarize(tasks).latest_completed is None
+
+    def test_picks_most_recent_finished(self):
+        tasks = [
+            helpers.task_to_dict(
+                make_task(status="finished", title="old.iso", completed_time=100)
+            ),
+            helpers.task_to_dict(
+                make_task(status="finished", title="new.iso", completed_time=200)
+            ),
+        ]
+        latest = helpers.summarize(tasks).latest_completed
+        assert latest is not None
+        assert latest["title"] == "new.iso"
+        assert latest["completed_time"] == 200
+
+    def test_seeding_counts_as_completed(self):
+        tasks = [
+            helpers.task_to_dict(
+                make_task(status="seeding", title="seeded.iso", completed_time=300)
+            ),
+            helpers.task_to_dict(
+                make_task(status="finished", title="done.iso", completed_time=200)
+            ),
+        ]
+        latest = helpers.summarize(tasks).latest_completed
+        assert latest is not None
+        assert latest["title"] == "seeded.iso"
+
+    def test_fallback_to_list_order_without_timestamps(self):
+        tasks = [
+            helpers.task_to_dict(make_task(status="finished", title="first.iso")),
+            helpers.task_to_dict(make_task(status="finished", title="second.iso")),
+        ]
+        latest = helpers.summarize(tasks).latest_completed
+        assert latest is not None
+        assert latest["title"] == "second.iso"
+
+    def test_completed_time_flows_through_task_dict(self):
+        data = helpers.task_to_dict(make_task(completed_time=1234))
+        assert data["completed_time"] == 1234

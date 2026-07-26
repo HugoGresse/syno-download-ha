@@ -1,0 +1,11 @@
+{
+  "name": "syno-download-ha",
+  "private": true,
+  "version": "0.2.0",
+  "scripts": {
+    "build:card": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  }
+}

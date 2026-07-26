@@ -34,3 +34,18 @@ jobs:
         run: pip install homeassistant py-synologydsm-api pytest
       - name: Run tests
         run: pytest tests
+
+  card:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build card
+        run: npm run build:card
+      - name: Ensure committed card.js is up to date
+        run: git diff --exit-code custom_components/synology_download_station/frontend/card.js

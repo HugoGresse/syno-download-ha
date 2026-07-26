@@ -15,3 +15,32 @@ add_task:
       selector:
         config_entry:
           integration: synology_download_station
+
+add_torrent:
+  fields:
+    torrent:
+      required: false
+      example: "ZDg6YW5ub3VuY2Uz..."
+      selector:
+        text:
+          multiline: true
+    file_path:
+      required: false
+      example: "/config/torrents/ubuntu.torrent"
+      selector:
+        text:
+    filename:
+      required: false
+      example: "ubuntu.torrent"
+      selector:
+        text:
+    destination:
+      required: false
+      example: "downloads"
+      selector:
+        text:
+    config_entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: synology_download_station

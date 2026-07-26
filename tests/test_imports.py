@@ -18,4 +18,4 @@ def test_all_modules_import():
     )
 
     assert const.DOMAIN == "synology_download_station"
-    assert len(sensor.SENSORS) == 4
+    assert len(sensor.SENSORS) == 5

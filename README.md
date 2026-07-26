@@ -3,11 +3,15 @@
 Custom integration that shows Download Station progress in Home Assistant and
 lets you queue magnet / torrent links straight from a dashboard.
 
+- **Compact dashboard card** (bundled, auto-registered): active downloads
+  with progress bars, latest completed download, magnet/URL submit box and a
+  .torrent file upload button.
 - **Sensors**: download speed, upload speed, active download count (with a
-  per-task attribute list: title, status, progress %, speed, ETA) and a
-  size-weighted overall progress percentage.
-- **Add downloads**: paste a magnet or torrent URL into the *Add download*
-  text entity, or call the `synology_download_station.add_task` action.
+  per-task attribute list: title, status, progress %, speed, ETA), a
+  size-weighted overall progress percentage and the latest completed
+  download.
+- **Add downloads**: from the card, the *Add download* text entity, or the
+  `add_task` / `add_torrent` actions.
 - Local polling of the DSM API — no cloud.
 
 Requires Home Assistant **2025.8** or newer and the Download Station package
@@ -51,6 +55,7 @@ The polling interval (default 10 s) can be changed under the integration's
 | `sensor.synology_download_station_upload_speed` | Current total upload rate |
 | `sensor.synology_download_station_active_downloads` | Number of downloading tasks. Attributes: `paused`, `seeding`, `finished`, `error`, `total` counts and a `tasks` list |
 | `sensor.synology_download_station_overall_progress` | Size-weighted progress % of queued tasks, unknown when idle |
+| `sensor.synology_download_station_latest_completed` | Title of the most recently completed download. Attributes: `completed_at`, `size` |
 | `text.synology_download_station_add_download` | Submit box: paste a link to start a download |
 
 Each item in the `tasks` attribute:
@@ -66,7 +71,30 @@ speed_download: 12582912
 speed_upload: 0
 progress: 50.0
 eta: 243
+completed_time: 0
 ```
+
+## Dashboard card
+
+The integration bundles a compact card and registers it automatically — no
+resource setup needed. Add it from the card picker (*Synology Download
+Card*) or with YAML:
+
+```yaml
+type: custom:syno-download-card
+```
+
+It shows every active/paused download with a progress bar, speed and ETA,
+the latest completed download, and an add row: paste a magnet/URL and press
+Enter, or use the folder button to upload a `.torrent` file from the
+browser.
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `entity` | `sensor.synology_download_station_active_downloads` | Source sensor |
+| `title` | `Downloads` | Card title |
+| `show_add` | `true` | Show the magnet/torrent add row |
+| `show_completed` | `true` | Show the latest completed line |
 
 ## Adding downloads
 
@@ -87,6 +115,20 @@ data:
 
 `destination` is optional (shared folder path on the NAS). With several NAS
 configured, add `config_entry_id`.
+
+### Torrent file upload
+
+The card's folder button uploads a `.torrent` picked in the browser. From
+automations, use the `add_torrent` action with either base64 content or a
+file path readable by Home Assistant:
+
+```yaml
+action: synology_download_station.add_torrent
+data:
+  file_path: /config/torrents/ubuntu.torrent
+```
+
+Paths outside `/config` must be listed in `allowlist_external_dirs`.
 
 ## Dashboard examples
 
@@ -149,4 +191,12 @@ actions:
 python3.13 -m venv .venv
 .venv/bin/pip install homeassistant py-synologydsm-api pytest
 .venv/bin/pytest tests
+```
+
+The card is TypeScript ([card-src/card.ts](card-src/card.ts)), compiled to
+`custom_components/synology_download_station/frontend/card.js` (committed):
+
+```bash
+npm install
+npm run build:card
 ```

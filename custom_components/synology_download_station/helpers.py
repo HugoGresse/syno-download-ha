@@ -36,6 +36,7 @@ class DownloadSummary:
     error: int = 0
     total: int = 0
     progress: float | None = None
+    latest_completed: dict[str, Any] | None = None
     tasks: list[dict[str, Any]] = field(default_factory=list)
 
 
@@ -60,6 +61,7 @@ def task_to_dict(task: Any) -> dict[str, Any]:
     except KeyError:
         additional = {}
     transfer = additional.get("transfer") or {}
+    detail = additional.get("detail") or {}
     downloaded = transfer.get("size_downloaded", 0)
     speed_download = transfer.get("speed_download", 0)
     return {
@@ -73,6 +75,7 @@ def task_to_dict(task: Any) -> dict[str, Any]:
         "speed_upload": transfer.get("speed_upload", 0),
         "progress": task_progress(task.size, downloaded),
         "eta": task_eta(task.size, downloaded, speed_download),
+        "completed_time": detail.get("completed_time", 0),
     }
 
 
@@ -85,6 +88,7 @@ def summarize(tasks: list[dict[str, Any]]) -> DownloadSummary:
     summary = DownloadSummary(total=len(tasks))
     size_sum = 0
     downloaded_sum = 0
+    latest: dict[str, Any] | None = None
     for task in tasks:
         status = task["status"]
         if status in IN_PROGRESS_STATES:
@@ -102,6 +106,19 @@ def summarize(tasks: list[dict[str, Any]]) -> DownloadSummary:
             if task["size"] > 0:
                 size_sum += task["size"]
                 downloaded_sum += task["downloaded"]
+        # Seeding tasks have finished downloading too; ">=" keeps the later
+        # list entry as a fallback ordering when completed_time is missing.
+        if status in (FINISHED_STATE, SEEDING_STATE) and (
+            latest is None
+            or task.get("completed_time", 0) >= latest.get("completed_time", 0)
+        ):
+            latest = task
+    if latest is not None:
+        summary.latest_completed = {
+            "title": latest["title"],
+            "size": latest["size"],
+            "completed_time": latest.get("completed_time", 0),
+        }
     if size_sum:
         summary.progress = round(downloaded_sum / size_sum * 100, 1)
     return summary
