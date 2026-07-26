@@ -6,6 +6,7 @@
  * auto-registered as a Lovelace resource by the integration.
  */
 const CARD_TAG = "syno-download-card";
+const CARD_VERSION = "0.2.3";
 const SERVICE_DOMAIN = "synology_download_station";
 const DEFAULT_ENTITY = "sensor.synology_download_station_active_downloads";
 const CARD_CSS = `
@@ -83,6 +84,25 @@ class SynoDownloadCard extends HTMLElement {
             return;
         this.lastEntity = entity;
         this.renderDynamic(entity);
+    }
+    get hass() {
+        return this.hassObj;
+    }
+    connectedCallback() {
+        // Upgrade-shadow guard: if `hass` was assigned before this element's
+        // class was defined, the value sits as an own property that shadows
+        // the accessor — swallow it and replay through the setter.
+        if (Object.prototype.hasOwnProperty.call(this, "hass")) {
+            const self = this;
+            const pending = self["hass"];
+            delete self["hass"];
+            this.hass = pending;
+        }
+        else if (this.hassObj) {
+            // Re-render on re-attach (view switching) in case state moved on.
+            this.lastEntity = undefined;
+            this.hass = this.hassObj;
+        }
     }
     getCardSize() {
         return 3;
@@ -232,6 +252,8 @@ class SynoDownloadCard extends HTMLElement {
 if (!customElements.get(CARD_TAG)) {
     customElements.define(CARD_TAG, SynoDownloadCard);
 }
+// eslint-disable-next-line no-console
+console.info(`%c SYNO-DOWNLOAD-CARD %c v${CARD_VERSION} `, "background:#0088cc;color:#fff;font-weight:600", "background:#333;color:#fff");
 const globalWindow = window;
 globalWindow.customCards = globalWindow.customCards ?? [];
 globalWindow.customCards.push({
