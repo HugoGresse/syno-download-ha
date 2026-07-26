@@ -1,0 +1,17 @@
+add_task:
+  fields:
+    url:
+      required: true
+      example: "magnet:?xt=urn:btih:c9e15763f722f23e98a29decdfae341b98d53056"
+      selector:
+        text:
+    destination:
+      required: false
+      example: "downloads"
+      selector:
+        text:
+    config_entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: synology_download_station

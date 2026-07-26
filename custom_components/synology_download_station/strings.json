@@ -1,0 +1,102 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Synology Download Station",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "username": "Username",
+          "password": "Password",
+          "ssl": "Use HTTPS",
+          "verify_ssl": "Verify SSL certificate"
+        },
+        "data_description": {
+          "host": "IP address or hostname of the NAS, without protocol.",
+          "port": "5001 for HTTPS (default), 5000 for HTTP.",
+          "username": "DSM user with Download Station permission. 2-factor authentication is not supported — use a dedicated account.",
+          "verify_ssl": "Disable when the NAS uses a self-signed certificate."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the NAS",
+      "invalid_auth": "Invalid username or password",
+      "otp_not_supported": "This account requires 2-factor authentication, which is not supported. Create a dedicated DSM user without 2FA.",
+      "download_station_unavailable": "Connected to DSM, but the Download Station package is not available for this user"
+    },
+    "abort": {
+      "already_configured": "This Download Station is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "scan_interval": "Update interval"
+        },
+        "data_description": {
+          "scan_interval": "How often to poll the NAS for task progress, in seconds."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "download_speed": {
+        "name": "Download speed"
+      },
+      "upload_speed": {
+        "name": "Upload speed"
+      },
+      "active_downloads": {
+        "name": "Active downloads"
+      },
+      "overall_progress": {
+        "name": "Overall progress"
+      }
+    },
+    "text": {
+      "add_download": {
+        "name": "Add download"
+      }
+    }
+  },
+  "services": {
+    "add_task": {
+      "name": "Add task",
+      "description": "Adds a download task from a magnet, HTTP(S), FTP or ed2k link.",
+      "fields": {
+        "url": {
+          "name": "URL",
+          "description": "The magnet or torrent/NZB file link to download."
+        },
+        "destination": {
+          "name": "Destination",
+          "description": "Shared folder path on the NAS, e.g. downloads. Uses the Download Station default when empty."
+        },
+        "config_entry_id": {
+          "name": "Download Station",
+          "description": "Which Download Station to use. Only needed when several are configured."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "add_task_failed": {
+      "message": "Adding the download failed: {error}"
+    },
+    "invalid_url": {
+      "message": "Only magnet, HTTP(S), FTP, ed2k or thunder links are supported."
+    },
+    "no_entry_loaded": {
+      "message": "No Synology Download Station is configured or loaded."
+    },
+    "multiple_entries": {
+      "message": "Several Download Stations are configured — set config_entry_id."
+    },
+    "entry_not_found": {
+      "message": "The given config entry is not found or not loaded."
+    }
+  }
+}

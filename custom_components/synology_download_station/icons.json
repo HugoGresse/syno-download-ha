@@ -1,0 +1,28 @@
+{
+  "entity": {
+    "sensor": {
+      "download_speed": {
+        "default": "mdi:download"
+      },
+      "upload_speed": {
+        "default": "mdi:upload"
+      },
+      "active_downloads": {
+        "default": "mdi:download-multiple"
+      },
+      "overall_progress": {
+        "default": "mdi:progress-download"
+      }
+    },
+    "text": {
+      "add_download": {
+        "default": "mdi:magnet"
+      }
+    }
+  },
+  "services": {
+    "add_task": {
+      "service": "mdi:download"
+    }
+  }
+}
