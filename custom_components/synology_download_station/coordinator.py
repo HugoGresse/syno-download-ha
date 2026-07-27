@@ -19,7 +19,12 @@ from synology_dsm.exceptions import (
     SynologyDSMException,
 )
 
-from .const import CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL, DOMAIN
+from .const import (
+    CONF_DESTINATION,
+    CONF_SCAN_INTERVAL,
+    DEFAULT_SCAN_INTERVAL,
+    DOMAIN,
+)
 from .helpers import DownloadSummary, summarize, task_to_dict
 
 _LOGGER = logging.getLogger(__name__)
@@ -71,6 +76,15 @@ class SdsCoordinator(DataUpdateCoordinator[SdsData]):
         )
         self.dsm = dsm
 
+    @property
+    def default_destination(self) -> str | None:
+        """Configured default share for new tasks (options win over setup)."""
+        entry = self.config_entry
+        destination = entry.options.get(
+            CONF_DESTINATION, entry.data.get(CONF_DESTINATION)
+        )
+        return destination.strip() if destination and destination.strip() else None
+
     async def _async_update_data(self) -> SdsData:
         """Fetch tasks and stats, retrying once after a fresh login."""
         try:
@@ -103,7 +117,7 @@ class SdsCoordinator(DataUpdateCoordinator[SdsData]):
         fails with 403 "Destination does not exist".
         """
         params = {"uri": url.strip()}
-        if destination:
+        if destination := destination or self.default_destination:
             params["destination"] = destination
         try:
             await self.dsm.post(TASK_API_KEY, "Create", params)
@@ -167,7 +181,7 @@ class SdsCoordinator(DataUpdateCoordinator[SdsData]):
         form = FormData(charset="utf-8")
         for key, value in params.items():
             form.add_field(key, str(value))
-        if destination:
+        if destination := destination or self.default_destination:
             form.add_field("destination", destination)
         form.add_field(
             "file",

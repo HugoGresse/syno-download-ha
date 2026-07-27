@@ -40,6 +40,7 @@ Copy `custom_components/synology_download_station/` into the
 | Username / Password | DSM user with Download Station permission |
 | Use HTTPS | On by default |
 | Verify SSL certificate | Off by default (self-signed certificates) |
+| Default destination folder | Optional shared folder (e.g. `downloads`) used for every task added without an explicit destination; empty = Download Station default. Changeable later under *Configure* |
 
 2-factor authentication is not supported — create a dedicated DSM user
 without 2FA and grant it Download Station only.

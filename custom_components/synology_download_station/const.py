@@ -13,6 +13,7 @@ DEFAULT_VERIFY_SSL = False
 DEFAULT_SCAN_INTERVAL = 10
 
 CONF_SCAN_INTERVAL = "scan_interval"
+CONF_DESTINATION = "destination"
 
 SERVICE_ADD_TASK = "add_task"
 SERVICE_ADD_TORRENT = "add_torrent"

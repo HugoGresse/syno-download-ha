@@ -36,6 +36,7 @@ from synology_dsm.exceptions import (
 )
 
 from .const import (
+    CONF_DESTINATION,
     CONF_SCAN_INTERVAL,
     DEFAULT_PORT,
     DEFAULT_SCAN_INTERVAL,
@@ -54,6 +55,7 @@ STEP_USER_SCHEMA = vol.Schema(
         vol.Required(CONF_PASSWORD): str,
         vol.Required(CONF_SSL, default=DEFAULT_USE_SSL): bool,
         vol.Required(CONF_VERIFY_SSL, default=DEFAULT_VERIFY_SSL): bool,
+        vol.Optional(CONF_DESTINATION): str,
     }
 )
 
@@ -131,13 +133,17 @@ class SdsOptionsFlow(OptionsFlowWithReload):
         """Handle the options step."""
         if user_input is not None:
             return self.async_create_entry(data=user_input)
+        entry = self.config_entry
+        current_destination = entry.options.get(
+            CONF_DESTINATION, entry.data.get(CONF_DESTINATION)
+        )
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
                 {
                     vol.Required(
                         CONF_SCAN_INTERVAL,
-                        default=self.config_entry.options.get(
+                        default=entry.options.get(
                             CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
                         ),
                     ): NumberSelector(
@@ -148,7 +154,11 @@ class SdsOptionsFlow(OptionsFlowWithReload):
                             unit_of_measurement="s",
                             mode=NumberSelectorMode.BOX,
                         )
-                    )
+                    ),
+                    vol.Optional(
+                        CONF_DESTINATION,
+                        description={"suggested_value": current_destination},
+                    ): str,
                 }
             ),
         )

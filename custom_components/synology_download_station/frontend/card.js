@@ -6,7 +6,7 @@
  * auto-registered as a Lovelace resource by the integration.
  */
 const CARD_TAG = "syno-download-card";
-const CARD_VERSION = "0.2.5";
+const CARD_VERSION = "0.2.6";
 const SERVICE_DOMAIN = "synology_download_station";
 const DEFAULT_ENTITY = "sensor.synology_download_station_active_downloads";
 const CARD_CSS = `

@@ -9,13 +9,15 @@
           "username": "Username",
           "password": "Password",
           "ssl": "Use HTTPS",
-          "verify_ssl": "Verify SSL certificate"
+          "verify_ssl": "Verify SSL certificate",
+          "destination": "Default destination folder"
         },
         "data_description": {
           "host": "IP address or hostname of the NAS, without protocol.",
           "port": "5001 for HTTPS (default), 5000 for HTTP.",
           "username": "DSM user with Download Station permission. 2-factor authentication is not supported — use a dedicated account.",
-          "verify_ssl": "Disable when the NAS uses a self-signed certificate."
+          "verify_ssl": "Disable when the NAS uses a self-signed certificate.",
+          "destination": "Shared folder for new downloads, e.g. downloads. Leave empty to use the Download Station default."
         }
       }
     },
@@ -33,10 +35,12 @@
     "step": {
       "init": {
         "data": {
-          "scan_interval": "Update interval"
+          "scan_interval": "Update interval",
+          "destination": "Default destination folder"
         },
         "data_description": {
-          "scan_interval": "How often to poll the NAS for task progress, in seconds."
+          "scan_interval": "How often to poll the NAS for task progress, in seconds.",
+          "destination": "Shared folder for new downloads, e.g. downloads. Leave empty to use the Download Station default."
         }
       }
     }
