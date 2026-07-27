@@ -6,7 +6,7 @@
  * auto-registered as a Lovelace resource by the integration.
  */
 const CARD_TAG = "syno-download-card";
-const CARD_VERSION = "0.2.3";
+const CARD_VERSION = "0.2.4";
 const SERVICE_DOMAIN = "synology_download_station";
 const DEFAULT_ENTITY = "sensor.synology_download_station_active_downloads";
 const CARD_CSS = `
@@ -254,6 +254,30 @@ if (!customElements.get(CARD_TAG)) {
 }
 // eslint-disable-next-line no-console
 console.info(`%c SYNO-DOWNLOAD-CARD %c v${CARD_VERSION} `, "background:#0088cc;color:#fff;font-weight:600", "background:#333;color:#fff");
+/**
+ * When this module loads after the dashboard already rendered, HA has
+ * dropped "custom element doesn't exist" error cards in our place and its
+ * own rebuild-on-define hook does not always fire. Sweep the DOM (piercing
+ * shadow roots) and ask every error card to rebuild itself.
+ */
+function rebuildErrorCards() {
+    const visit = (node) => {
+        if (node.nodeType !== Node.ELEMENT_NODE)
+            return;
+        const element = node;
+        if (element.localName === "hui-error-card") {
+            element.dispatchEvent(new Event("ll-rebuild", { bubbles: true, composed: true }));
+            return;
+        }
+        if (element.shadowRoot) {
+            element.shadowRoot.childNodes.forEach(visit);
+        }
+        element.childNodes.forEach(visit);
+    };
+    document.body.childNodes.forEach(visit);
+}
+window.setTimeout(rebuildErrorCards, 100);
+window.setTimeout(rebuildErrorCards, 2500);
 const globalWindow = window;
 globalWindow.customCards = globalWindow.customCards ?? [];
 globalWindow.customCards.push({
