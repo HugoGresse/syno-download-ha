@@ -14,7 +14,10 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from synology_dsm import SynologyDSM
-from synology_dsm.exceptions import SynologyDSMException
+from synology_dsm.exceptions import (
+    SynologyDSMAPIErrorException,
+    SynologyDSMException,
+)
 
 from .const import CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL, DOMAIN
 from .helpers import DownloadSummary, summarize, task_to_dict
@@ -93,11 +96,27 @@ class SdsCoordinator(DataUpdateCoordinator[SdsData]):
         )
 
     async def async_add_task(self, url: str, destination: str | None = None) -> None:
-        """Create a download task from a magnet/HTTP/FTP/ed2k link."""
+        """Create a download task from a magnet/HTTP/FTP/ed2k link.
+
+        Params are built by hand: the library helper always sends the
+        destination key, and None reaches DSM as the string "None", which
+        fails with 403 "Destination does not exist".
+        """
+        params = {"uri": url.strip()}
+        if destination:
+            params["destination"] = destination
         try:
-            await self.dsm.download_station.create(
-                uri=url.strip(), destination=destination
-            )
+            await self.dsm.post(TASK_API_KEY, "Create", params)
+            await self.dsm.download_station.update()
+        except SynologyDSMAPIErrorException as err:
+            code = err.args[1] if len(err.args) > 1 else None
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="add_task_failed",
+                translation_placeholders={
+                    "error": CREATE_ERROR_MESSAGES.get(code, str(err))
+                },
+            ) from err
         except SynologyDSMException as err:
             raise HomeAssistantError(
                 translation_domain=DOMAIN,

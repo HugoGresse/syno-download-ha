@@ -1,7 +1,7 @@
 {
   "name": "syno-download-ha",
   "private": true,
-  "version": "0.2.4",
+  "version": "0.2.5",
   "scripts": {
     "build:card": "tsc -p tsconfig.json"
   },
